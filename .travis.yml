@@ -1,7 +1,6 @@
+sudo: required
 language: go
 
-env:
-  - "PATH=/home/travis/gopath/bin:$PATH"
 go:
   - 1.8
   - tip
