@@ -239,22 +239,13 @@ func (f *fragmentList) build(in *layers.IPv6, fragment *layers.IPv6Fragment) (*l
 	var final []byte
 	var currentOffset uint16
 
+	// NOTE: Overlapping IPv5 Fragments MUST be dropped
 	for e := f.List.Front(); e != nil; e = e.Next() {
 		frag, _ := e.Value.(*layers.IPv6Fragment)
 		if frag.FragmentOffset*8 == currentOffset {
 			debug.Printf("defrag: building - adding %d\n", frag.FragmentOffset*8)
 			final = append(final, frag.Payload...)
 			currentOffset = currentOffset + uint16(len(frag.Payload))
-		} else if frag.FragmentOffset*8 < currentOffset {
-			// overlapping fragment - let's take only what we need
-			startAt := currentOffset - frag.FragmentOffset*8
-			debug.Printf("defrag: building - overlapping, starting at %d\n",
-				startAt)
-			if startAt > uint16(len(frag.Payload)) {
-				return nil, fmt.Errorf("defrag: building - invalid fragment")
-			}
-			final = append(final, frag.Payload[startAt:]...)
-			currentOffset = currentOffset + frag.FragmentOffset*8
 		} else {
 			// Houston - we have an hole !
 			debug.Printf("defrag: hole found while building, " +

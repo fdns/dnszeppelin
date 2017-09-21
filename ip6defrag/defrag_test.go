@@ -148,3 +148,15 @@ func TestNotDiscardFlows(t *testing.T) {
 	out, _ := defrag.DefragIPv6WithTimestamp(&ip2, &ipFragment2, time.Now())
 	assert.NotNil(t, out, "Packet defragged after discarding.")
 }
+
+func TestNotAssembleOverlappingFragments(t *testing.T) {
+	t.Parallel()
+	defrag := NewIPv6Defragmenter()
+	ip, ipFragment := generateFragment(0, 0, true, []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15})
+	ip2, ipFragment2 := generateFragment(0, 1, false, []byte{8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23})
+
+	defrag.DefragIPv6WithTimestamp(&ip, &ipFragment, time.Now())
+	out, _ := defrag.DefragIPv6WithTimestamp(&ip2, &ipFragment2, time.Now())
+
+	assert.Nil(t, out, "Overlapping fragments not defragged")
+}
