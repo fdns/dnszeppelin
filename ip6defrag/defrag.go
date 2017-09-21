@@ -148,11 +148,11 @@ func (d *IPv6Defragmenter) securityChecks(ip *layers.IPv6Fragment) (bool, error)
 		return false, fmt.Errorf("defrag: fragment offset too big "+
 			"(handcrafted? %d > %d)", ip.FragmentOffset, IPv6MaximumFragmentOffset)
 	}
-	fragOffset := ip.FragmentOffset * 8
+	fragOffset := uint32(ip.FragmentOffset * 8)
 	// don't allow fragment that would oversize an IP packet
-	if fragOffset+uint16(len(ip.Payload)) > IPv6MaximumSize {
+	if fragOffset+uint32(len(ip.Payload)) > IPv6MaximumSize {
 		return false, fmt.Errorf("defrag: fragment will overrun "+
-			"(handcrafted? %d > %d)", fragOffset+uint16(len(ip.Payload)), IPv6MaximumFragmentOffset)
+			"(handcrafted? %d > %d)", fragOffset+uint32(len(ip.Payload)), IPv6MaximumFragmentOffset)
 	}
 	return true, nil
 }

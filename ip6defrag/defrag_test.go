@@ -160,3 +160,38 @@ func TestNotAssembleOverlappingFragments(t *testing.T) {
 
 	assert.Nil(t, out, "Overlapping fragments not defragged")
 }
+
+func TestDuplicateFragments(t *testing.T) {
+	t.Parallel()
+	defrag := NewIPv6Defragmenter()
+	ip, ipFragment := generateFragment(0, 0, true, []byte{0, 1, 2, 3, 4, 5, 6, 7})
+	_, err := defrag.DefragIPv6(&ip, &ipFragment)
+	assert.NoError(t, err)
+
+	// Duplicate
+	_, err = defrag.DefragIPv6(&ip, &ipFragment)
+	assert.NoError(t, err)
+
+	ip2, ipFragment2 := generateFragment(0, 1, false, []byte{8, 9, 10})
+	out, err := defrag.DefragIPv6(&ip2, &ipFragment2)
+	assert.NotNil(t, out, "Packet not defragmented after sending duplicated fragment")
+	assert.Equal(t, out.Payload, []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}, "Payload not reassembled correctly")
+}
+
+func TestSecurityCheckFragmentOffset(t *testing.T) {
+	t.Parallel()
+	defrag := NewIPv6Defragmenter()
+	ip, ipFragment := generateFragment(0, 8191+1, true, []byte{})
+	_, err := defrag.DefragIPv6(&ip, &ipFragment)
+	assert.Error(t, err)
+}
+
+func TestSecurityCheckOversized(t *testing.T) {
+	t.Parallel()
+	defrag := NewIPv6Defragmenter()
+	payload := make([]byte, 65535)
+	payload[65534] = 0 // Force length
+	ip, ipFragment := generateFragment(0, 20, true, payload)
+	_, err := defrag.DefragIPv6(&ip, &ipFragment)
+	assert.Error(t, err)
+}
