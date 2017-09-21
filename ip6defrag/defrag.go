@@ -278,7 +278,7 @@ type ipv6 struct {
 	id  uint32
 }
 
-// newIPv6 returns a new initialized IPv4 Flow
+// newIPv6 returns a new initialized IPv6 Flow
 func newIPv6(ip *layers.IPv6, frag *layers.IPv6Fragment) ipv6 {
 	return ipv6{
 		ip4: ip.NetworkFlow(),
