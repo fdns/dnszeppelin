@@ -1,9 +1,3 @@
-// Copyright 2013 Google, Inc. All rights reserved.
-//
-// Use of this source code is governed by a BSD-style license
-// that can be found in the LICENSE file in the root of the source
-// tree.
-
 package ip6defrag
 
 import (
@@ -24,7 +18,8 @@ func generateFragment(id uint32, offset uint16, moreFragments bool, payload []by
 	ipFragment := layers.IPv6Fragment{
 		Identification: id,
 		FragmentOffset: offset,
-		MoreFragments: moreFragments,
+		MoreFragments:  moreFragments,
+		NextHeader:     layers.IPProtocolTCP,
 	}
 	ipFragment.Payload = payload
 	return ip, ipFragment
@@ -46,12 +41,15 @@ func TestTwoFrag(t *testing.T) {
 	_, err := defrag.DefragIPv6(&ip, &ipFragment)
 	assert.NoError(t, err)
 
-
 	ip2, ipFragment2 := generateFragment(0, 1, false, []byte{8, 9, 10})
 	out, err := defrag.DefragIPv6(&ip2, &ipFragment2)
 	assert.NotNil(t, out, "Packet not defragmented after sending all fragments")
 
 	assert.Equal(t, out.Payload, []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}, "Payload not reassembled correctly")
+	assert.Equal(t, out.NextHeader, layers.IPProtocolTCP, "NextHeader not copied correctly to final ip packet")
+	assert.Equal(t, ip.SrcIP, out.SrcIP)
+	assert.Equal(t, ip.DstIP, out.DstIP)
+	assert.Equal(t, ip.Version, out.Version)
 }
 
 func TestThreeFrag(t *testing.T) {

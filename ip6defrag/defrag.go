@@ -1,9 +1,3 @@
-// Copyright 2013 Google, Inc. All rights reserved.
-//
-// Use of this source code is governed by a BSD-style license
-// that can be found in the LICENSE file in the root of the source
-// tree.
-
 // Package ip6defrag implements a IPv6 defragmenter
 package ip6defrag
 
@@ -233,7 +227,7 @@ func (f *fragmentList) insert(in *layers.IPv6, fragment *layers.IPv6Fragment, t 
 	}
 	// Ready to try defrag ?
 	if f.FinalReceived && f.Highest == f.Current {
-		return f.build(in)
+		return f.build(in, fragment)
 	}
 	return nil, nil
 }
@@ -241,7 +235,7 @@ func (f *fragmentList) insert(in *layers.IPv6, fragment *layers.IPv6Fragment, t 
 // Build builds the final datagram, creating a new ip.
 // It puts priority to packet in the early position of the list.
 // See Insert for more details.
-func (f *fragmentList) build(in *layers.IPv6) (*layers.IPv6, error) {
+func (f *fragmentList) build(in *layers.IPv6, fragment *layers.IPv6Fragment) (*layers.IPv6, error) {
 	var final []byte
 	var currentOffset uint16
 
@@ -276,7 +270,7 @@ func (f *fragmentList) build(in *layers.IPv6) (*layers.IPv6, error) {
 		TrafficClass: in.TrafficClass,
 		FlowLabel:    in.FlowLabel,
 		Length:       f.Highest,
-		NextHeader:   in.NextHeader,
+		NextHeader:   fragment.NextHeader,
 		HopLimit:     in.HopLimit,
 		SrcIP:        in.SrcIP,
 		DstIP:        in.DstIP,
